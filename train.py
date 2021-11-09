@@ -1,44 +1,15 @@
+#==========================================================================================================#
+# TRAIN.PY
+# This file is meant to hold the training structure updating model parameters.
+#==========================================================================================================#
+
+
 import torch
-import yaml
 import matplotlib.pyplot as plt
 import sys
 import os
-
-def load_yaml(path) :
-    print('Reading yaml...')
-    with open('train_config.yaml', "r") as yamlfile :
-        config_data = yaml.safe_load(yamlfile)
-        print("Read sucessful!!")
-    return config_data
-
-def load_data(config_data) :
-    # TODO Implement functionality to take a dataset path and return train and test loaders in pytorch
-    dataset_path = config_data['dataset_path']
-    batch_size = config_data['batch_size']
-    return 'TRAIN LOADER', 'TEST LOADER'
-
-def load_model(config_data) :
-    # TODO Intiliaze the value of the model
-    model_type =  config_data['model']
-    return 'Model'
-
-def load_optimizer(model_params, config_data) :
-    # Lowercase and remove white space to limit user input errors
-    optimizer_type = config_data['optimizer'].lower().replace(' ', '')
-    if optimizer_type == 'adam' :
-        learning_rate = config_data['learning_rate']
-        return torch.optim.Adam(model_params, learning_rate)
-    else :
-        print('ERROR: Optimizer Type is not recognized')
-
-def load_loss_function(config_data) :
-    # Lowercase and remove white space to limit user input errors
-    loss_function_type = config_data['loss_function'].lower().replace(' ', '')
-    if loss_function_type == 'Cross Entropy'.lower().replace(' ', '') :
-        return torch.nn.CrossEntropyLoss()
-    else :
-        print('ERROR: Unknown Loss Function in config data')
-
+from models import *
+from utils import *
 
 def accuracy(logits, labels) :
     correct = 0
@@ -110,6 +81,15 @@ def train(train_loader, test_loader, model, optimizer, loss_fn, epochs) :
     print('Training Finished...')
     display_plot(train_accs, test_accs, train_losses, test_losses)
 
+def save_model(model, config_data) :
+    save_path = config_data['model_save_path']
+    if save_path.lower.replace(' ', '') == 'none' :
+        print('No Save Path Specified')
+        return
+    print('Saving Model...')
+    torch.save(model, save_path)
+    print('Model Saved')
+
 if __name__ == "__main__" :
     # If no command line arguement were given then it checks the local directory for a train_config.yaml file
     if len(sys.argv) == 1 :
@@ -129,14 +109,14 @@ if __name__ == "__main__" :
     print(config_data)
 
     epochs = config_data['epochs']
-    train_loader, test_loader = load_data(config_data)
-    model = load_model(config_data)
+    train_loader, test_loader = load_train_data(config_data)
+    model = load_new_model(config_data)
     optimizer = load_optimizer(model.parameters(), config_data)
     loss_fn = load_loss_function(config_data)
-    print(train_loader, test_loader, model, optimizer, loss_fn, EPOCHS)
-    #train(train_loader, test_loader, model, optimizer, loss_fn, EPOCHS)
+    #train(train_loader, test_loader, model, optimizer, loss_fn, epochs)
+    save_model(model, config_data)
 
-
+   
 
 
 

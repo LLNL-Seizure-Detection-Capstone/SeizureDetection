@@ -7,3 +7,5 @@ epochs : 10
 loss_function : 'None'
 model_save_path : 'None'
 graph_save_path : 'None'
+load_existing_model : False
+model_load_path : True
