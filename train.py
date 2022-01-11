@@ -36,51 +36,6 @@ def display_plot(train_accs, test_accs, train_losses, test_losses):
     plt.grid(axis = 'y')
     plt.show()
 
-def train(train_loader, test_loader, model, optimizer, loss_fn, epochs) :
-    train_accs, test_accs, train_losses, test_losses = list(), list(), list(), list()
-    print('Starting Training...')
-    for epoch in range(epochs) :
-        T0 = time.time()
-        epoch_train_accs, epoch_test_accs, epoch_train_losses, epoch_test_losses = list(), list(), list(), list()
-        for batch in train_loader :
-            data = batch[0]
-            labels = batch[1]
-            model.train()
-            optimizer.zero_grad()
-            out = model(data)
-            train_loss = loss_fn(out, labels)
-            train_loss.backward()
-            optimizer.step()
-            train_acc = accuracy(out, labels)
-            epoch_train_accs.append(train_acc)
-            epoch_train_losses.append(train_loss.item())
-
-        for batch in test_loader :
-            model.eval()
-            data = batch[0]
-            labels = batch[1]
-            optimizer.zero_grad()
-            out = model(data)
-            test_loss = loss_fn(out, labels)
-            test_acc = accuracy(out, labels)
-            epoch_test_accs.append(test_acc)
-            epoch_test_losses.append(test_loss.item())
-
-        train_acc = sum(epoch_train_accs) / len(epoch_train_accs)
-        train_loss = sum(epoch_train_losses) / len(epoch_train_losses)
-        test_acc = sum(epoch_test_accs) / len(epoch_test_accs)
-        test_loss = sum(epoch_test_losses) / len(epoch_test_losses)
-
-        train_accs.append(train_acc)
-        train_losses.append(train_loss)
-        test_accs.append(test_acc)
-        test_losses.append(test_loss)
-            
-
-        print('Epoch: {:03d}, Train Loss: {:.3f}, Train Acc: {:.3f}, Test Loss: {:.3f}, Test Acc: {:.3f}, Time: {}s'.format(epoch, train_loss, train_acc,  test_loss, test_acc, round(time.time() - T0)))
-    print('Training Finished...')
-    display_plot(train_accs, test_accs, train_losses, test_losses)
-
 def save_model(model, config_data) :
     save_path = config_data['model_save_path']
     if save_path.lower.replace(' ', '') == 'none' :
@@ -89,6 +44,46 @@ def save_model(model, config_data) :
     print('Saving Model...')
     torch.save(model, save_path)
     print('Model Saved')
+
+def get_train_loop(config_data) :
+    model_type =  config_data['model'].lower().replace(' ', '')
+    if model_type == 'cnn_ae_mlp' :
+        return train_loop_CNN_AE_MLP
+    else :
+        print('Training loop was not found')
+        return 'ERROR in get_train_loop'
+
+def train_loop_CNN_AE_MLP(train_loader, test_loader, model, optimizer, epochs) :
+    print('Starting Training...')
+    ae_loss_fn = torch.nn.MSELoss()
+    target_loss_fn = torch.nn.BCELoss()
+    for epoch in range(epochs) : 
+        T0 = time.time()
+        for batch in train_loader :
+            data = batch[0]
+            labels = batch[1]
+            model.train()
+            optimizer.zero_grad()
+            decoded_mat, out = model(data)
+            ae_train_loss = ae_loss_fn(decoded_mat, data)
+            target_train_loss = target_loss_fn(out, labels)
+            total_train_loss = ae_train_loss + target_train_loss
+            total_train_loss.backward()
+            optimizer.step()
+            train_acc = accuracy(out, labels)
+
+        for batch in test_loader :
+            model.eval()
+            data = batch[0]
+            labels = batch[1]
+            optimizer.zero_grad()
+            decoded, out = model(data)
+            ae_test_loss = ae_loss_fn(decoded, data)
+            target_test_loss = target_loss_fn(out, labels)
+            total_test_loss = target_test_loss + ae_test_loss
+            test_acc = accuracy(out, labels)
+
+    return model
 
 if __name__ == "__main__" :
     # If no command line arguement were given then it checks the local directory for a train_config.yaml file
@@ -112,8 +107,8 @@ if __name__ == "__main__" :
     train_loader, test_loader = load_train_data(config_data)
     model = load_new_model(config_data)
     optimizer = load_optimizer(model.parameters(), config_data)
-    loss_fn = load_loss_function(config_data)
-    #train(train_loader, test_loader, model, optimizer, loss_fn, epochs)
+    train_loop = get_train_loop(config_data)
+    model = train_loop(train_loader, test_loader, model, optimizer, loss_fn, epochs)
     save_model(model, config_data)
 
    

@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 # Architecture For 2D-CNN AE + MLP is found under "A Deep Learning Approach for Automatic Seizure Detection in Children With Epilepsy"
 # ASSUMING TIME STEP of 2 seconds
 # BINARY CLASSIFIER
-class CNN_AE_MLP(torch.nn.Module) :
+class CNN_AE(torch.nn.Module) :
     def __init__(self, **kwargs) :
         super().__init__()
         # BATCH X CHANNEL X HEIGHT X WIDTH

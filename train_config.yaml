@@ -1,10 +1,9 @@
 learning_rate : .0001
 optimizer : 'Adam'
 batch_size : 32
-model : 'None'
+model : 'CNN_AE_MLP'
 dataset_path : 'None'
 epochs : 10
-loss_function : 'None'
 model_save_path : 'None'
 graph_save_path : 'None'
 load_existing_model : False

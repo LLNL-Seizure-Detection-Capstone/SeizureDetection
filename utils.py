@@ -4,6 +4,7 @@
 #==========================================================================================================#
 
 import yaml
+from models import CNN_AE_MLP
 
 def load_yaml(path) :
     print('Reading yaml...')
@@ -19,9 +20,12 @@ def load_train_data(config_data) :
     return 'TRAIN LOADER', 'TEST LOADER'
 
 def load_new_model(config_data) :
-    # TODO Intiliaze the value of the model
-    model_type =  config_data['model']
-    return 'Model'
+    model_type =  config_data['model'].lower().replace(' ', '')
+    if model_type == 'cnn_ae_mlp' :
+        return CNN_AE_MLP()
+    else :
+        print('Model not found')
+        return 'ERROR in load_new_model'
 
 def load_existing_model(config_data) :
     model_path = config_data['model_load_path']
@@ -38,14 +42,8 @@ def load_optimizer(model_params, config_data) :
     else :
         print('ERROR: Optimizer Type is not recognized')
 
-def load_loss_function(config_data) :
-    # Lowercase and remove white space to limit user input errors
-    loss_function_type = config_data['loss_function'].lower().replace(' ', '')
-    if loss_function_type == 'Cross Entropy'.lower().replace(' ', '') :
-        return torch.nn.CrossEntropyLoss()
-    else :
-        print('ERROR: Unknown Loss Function in config data')
-
 def load_predict_data(config_data) :
     # TODO Implement functionality to get a single dataset to run predicitons on
     pass
+
+
