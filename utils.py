@@ -4,11 +4,11 @@
 #==========================================================================================================#
 
 import yaml
-from models import CNN_AE_MLP
+from models import *
 import os
 import pandas as pd
 import torch
-from torch.utils.data import Dataset
+from datasets import *
 
 def load_yaml(path) :
     print('Reading yaml...')
@@ -18,9 +18,21 @@ def load_yaml(path) :
     return config_data
 
 def load_train_data(config_data) :
-    # TODO Implement functionality to take a dataset path and return train and test loaders in pytorch
     dataset_path = config_data['dataset_path']
     batch_size = config_data['batch_size']
+    if 'chbmit' in dataset_path.lower() :
+        chbmit_dataset = CHBMITDataset(dataset_path)
+        test_size = len(chbmit_dataset) // 4
+        train_size = len(chbmit_dataset) - test_size
+        train_dataset, test_dataset = random_split(chbmit_dataset, [train_size, test_size])
+        train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=int(batch_size), shuffle=True)
+        test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=int(batch_size), shuffle=True)
+        return train_loader, test_loader
+
+    else :
+        print('ERROR in load_train_data')
+        return 'TRAIN LOADER', 'TEST LOADER' 
+
     return 'TRAIN LOADER', 'TEST LOADER'
 
 def load_new_model(config_data) :

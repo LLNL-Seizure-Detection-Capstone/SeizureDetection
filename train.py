@@ -3,7 +3,6 @@
 # This file is meant to hold the training structure updating model parameters.
 #==========================================================================================================#
 
-
 import torch
 import matplotlib.pyplot as plt
 import sys
@@ -102,9 +101,12 @@ if __name__ == "__main__" :
 
     config_data = load_yaml(config_path)
     print(config_data)
-
     epochs = config_data['epochs']
+    print('GETTING LOADER')
     train_loader, test_loader = load_train_data(config_data)
+    print('GOT LOADER')
+    tensor = next(iter(train_loader))
+    print('TENSOR')
     model = load_new_model(config_data)
     optimizer = load_optimizer(model.parameters(), config_data)
     train_loop = get_train_loop(config_data)

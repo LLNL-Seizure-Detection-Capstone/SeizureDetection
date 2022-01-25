@@ -2,7 +2,7 @@ learning_rate : .0001
 optimizer : 'Adam'
 batch_size : 32
 model : 'CNN_AE_MLP'
-dataset_path : 'None'
+dataset_path : 'C:\Users\bisch\Downloads\chbmit.csv'
 epochs : 10
 model_save_path : 'None'
 graph_save_path : 'None'
