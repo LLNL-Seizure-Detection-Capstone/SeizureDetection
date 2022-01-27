@@ -4,11 +4,12 @@
 #==========================================================================================================#
 
 import yaml
-from models import *
+from models import CNN_AE_MLP
 import os
 import pandas as pd
 import torch
 from datasets import *
+import numpy as np
 
 def load_yaml(path) :
     print('Reading yaml...')
@@ -24,7 +25,7 @@ def load_train_data(config_data) :
         chbmit_dataset = CHBMITDataset(dataset_path)
         test_size = len(chbmit_dataset) // 4
         train_size = len(chbmit_dataset) - test_size
-        train_dataset, test_dataset = random_split(chbmit_dataset, [train_size, test_size])
+        train_dataset, test_dataset = torch.utils.data.random_split(chbmit_dataset, [train_size, test_size])
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=int(batch_size), shuffle=True)
         test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=int(batch_size), shuffle=True)
         return train_loader, test_loader

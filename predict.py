@@ -5,6 +5,7 @@
 
 from models import *
 from utils import *
+import sys
 
 if __name__ == "__main__" :
     # If no command line arguement were given then it checks the local directory for a predict_config.yaml file

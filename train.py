@@ -2,19 +2,21 @@
 # TRAIN.PY
 # This file is meant to hold the training structure updating model parameters.
 #==========================================================================================================#
-
 import torch
 import matplotlib.pyplot as plt
 import sys
 import os
 from models import *
 from utils import *
+import time
+from tqdm import tqdm
+
+
 
 def accuracy(logits, labels) :
-    correct = 0
-    pred = logits.max(dim=1)[1]
-    correct += pred.eq(labels).sum().item()
-    return correct / len(labels)
+    predicitons = torch.tensor( [ 1 if x > .5 else 0 for x in logits ] )
+    correct = torch.sum(predicitons == labels)
+    return (correct / len(labels)).item()
 
 def display_plot(train_accs, test_accs, train_losses, test_losses):
     plt.title('Accuracy Graph')
@@ -58,29 +60,34 @@ def train_loop_CNN_AE_MLP(train_loader, test_loader, model, optimizer, epochs) :
     target_loss_fn = torch.nn.BCELoss()
     for epoch in range(epochs) : 
         T0 = time.time()
-        for batch in train_loader :
-            data = batch[0]
-            labels = batch[1]
+        epoch_acc = list()
+        for batch in tqdm(train_loader) :
+            data = batch[0].float()
+            labels = batch[1].float()
             model.train()
             optimizer.zero_grad()
             decoded_mat, out = model(data)
+            out = out.flatten()
             ae_train_loss = ae_loss_fn(decoded_mat, data)
             target_train_loss = target_loss_fn(out, labels)
-            total_train_loss = ae_train_loss + target_train_loss
-            total_train_loss.backward()
+            ae_train_loss.backward(retain_graph=True)
+            target_train_loss.backward(retain_graph=True)
             optimizer.step()
             train_acc = accuracy(out, labels)
 
-        for batch in test_loader :
+        for batch in tqdm(test_loader) :
             model.eval()
-            data = batch[0]
-            labels = batch[1]
             optimizer.zero_grad()
-            decoded, out = model(data)
-            ae_test_loss = ae_loss_fn(decoded, data)
+            data = batch[0].float()
+            labels = batch[1].float()
+            decoded_mat, out = model(data)
+            out = out.flatten()
+            ae_test_loss = ae_loss_fn(decoded_mat, data)
             target_test_loss = target_loss_fn(out, labels)
-            total_test_loss = target_test_loss + ae_test_loss
             test_acc = accuracy(out, labels)
+            epoch_acc.append(test_acc)
+
+        print('Test Acc after one Epoch: {}'.format((sum(epoch_acc) / len(epoch_acc))))
 
     return model
 
@@ -98,19 +105,14 @@ if __name__ == "__main__" :
     else :
         print('ERROR: Expected a 1 Arguement in train.py (yaml config file)')
 
-
     config_data = load_yaml(config_path)
-    print(config_data)
     epochs = config_data['epochs']
-    print('GETTING LOADER')
     train_loader, test_loader = load_train_data(config_data)
-    print('GOT LOADER')
     tensor = next(iter(train_loader))
-    print('TENSOR')
     model = load_new_model(config_data)
     optimizer = load_optimizer(model.parameters(), config_data)
     train_loop = get_train_loop(config_data)
-    model = train_loop(train_loader, test_loader, model, optimizer, loss_fn, epochs)
+    model = train_loop_CNN_AE_MLP(train_loader, test_loader, model, optimizer, epochs)
     save_model(model, config_data)
 
    

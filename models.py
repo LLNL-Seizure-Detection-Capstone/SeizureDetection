@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 # Architecture For 2D-CNN AE + MLP is found under "A Deep Learning Approach for Automatic Seizure Detection in Children With Epilepsy"
 # ASSUMING TIME STEP of 2 seconds
 # BINARY CLASSIFIER
-class CNN_AE(torch.nn.Module) :
+class CNN_AE_MLP(torch.nn.Module) :
     def __init__(self, **kwargs) :
         super().__init__()
         # BATCH X CHANNEL X HEIGHT X WIDTH
@@ -31,7 +31,7 @@ class CNN_AE(torch.nn.Module) :
             torch.nn.ReLU(),
             torch.nn.MaxPool2d(2)
             # 32 X 1 X 64
-            )
+        )
 
         self.decoder = torch.nn.Sequential(
             # 32 X 1 X 64
@@ -47,7 +47,7 @@ class CNN_AE(torch.nn.Module) :
             torch.nn.Upsample(scale_factor=2),
             torch.nn.Conv2d(32, 1, (3,2), padding='same'),
             # 512 X 24 X 1
-            )
+         )
 
         self.classifier = torch.nn.Sequential(
             torch.nn.Flatten(),
@@ -59,7 +59,7 @@ class CNN_AE(torch.nn.Module) :
             torch.nn.Dropout(.2), # Added from original architecture
             torch.nn.Linear(32, 1),
             torch.nn.Sigmoid()
-            )
+         )
 
     # Returns the decoded information first and then returns the label
     def forward(self, x) :
@@ -68,10 +68,3 @@ class CNN_AE(torch.nn.Module) :
         out = self.classifier(encoded)
         return decoded, out
 
-    def test(self, x) :
-        encoded = self.encoder(x)
-        decoded = self.decoder(encoded)
-        out = self.classifier(encoded)
-        print(out.shape)
-        print(decoded.shape)
-        return
