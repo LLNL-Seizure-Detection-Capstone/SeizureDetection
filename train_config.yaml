@@ -1,10 +1,10 @@
-learning_rate : .0001
+learning_rate : .001
 optimizer : 'Adam'
 batch_size : 32
 model : 'CNN_AE_MLP'
 dataset_path : 'C:\Users\bisch\Downloads\chbmit.csv'
-epochs : 5
-model_save_path : 'None'
-graph_save_path : 'None'
+epochs : 50
+model_save_path : 'C:\Users\bisch\OneDrive\Desktop\School\Capstone\Models\FirstTrainWeights.pt'
+graph_save_path : 'C:\Users\bisch\OneDrive\Desktop\School\Capstone\Graphs\FirstTrainGraph'
 load_existing_model : False
 model_load_path : True

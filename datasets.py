@@ -7,13 +7,15 @@ import numpy as np
 class CHBMITDataset(Dataset):
     def __init__(self, csv_file, transform=None):
         self.df = pd.read_csv(csv_file)
-        self.df.insert(loc=23, column='padding', value=0) # add a column of padding to dataframe
+        self.df.insert(loc=23, column='Padding', value=0) # add a column of padding to dataframe
         
         # Normalize & Standardize data
-        # self.df_min_max_scale = pd.DataFrame(preprocessing.MinMaxScaler().fit_transform(self.df)) # range [0, 1]
-        self.df = pd.DataFrame(preprocessing.StandardScaler().fit_transform(self.df_min_max_scale)) # centers values around 0 with std dev of 1
-       
-        self.transform = transform
+        normal_df = (self.df-self.df.mean()) / self.df.std()
+        normal_df['Outcome'] = self.df['Outcome']
+        normal_df['Padding'] = self.df['Padding']
+        self.df = normal_df
+
+        # We may need to normalize somehow by batch
     
     def __len__(self):
         return len(self.df)//256 - 1 # num of rows / 256 - 1 = 8190
