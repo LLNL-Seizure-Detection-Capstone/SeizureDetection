@@ -10,7 +10,12 @@ class CHBMITDataset(Dataset):
         self.df.insert(loc=23, column='Padding', value=0) # add a column of padding to dataframe
         
         # Normalize & Standardize data
-        normal_df = (self.df-self.df.mean()) / self.df.std()
+        # Mean Normal
+        #normal_df = (self.df-self.df.mean()) / self.df.std()
+
+        # Min Max Standard
+        normal_df = (self.df-self.df.min()) / (self.df.max()-self.df.min())
+
         normal_df['Outcome'] = self.df['Outcome']
         normal_df['Padding'] = self.df['Padding']
         self.df = normal_df

@@ -3,8 +3,9 @@ optimizer : 'Adam'
 batch_size : 32
 model : 'CNN_AE_MLP'
 dataset_path : 'C:\Users\bisch\Downloads\chbmit.csv'
-epochs : 50
-model_save_path : 'C:\Users\bisch\OneDrive\Desktop\School\Capstone\Models\FirstTrainWeights.pt'
-graph_save_path : 'C:\Users\bisch\OneDrive\Desktop\School\Capstone\Graphs\FirstTrainGraph'
+ae_epochs : 1
+target_epochs : 1
+model_save_path : 'C:\Users\bisch\OneDrive\Desktop\School\Capstone\Models\Test.pt'
+graph_save_path : 'C:\Users\bisch\OneDrive\Desktop\School\Capstone\Graphs\Test'
 load_existing_model : False
 model_load_path : True

@@ -10,6 +10,8 @@ from models import *
 from utils import *
 import time
 from tqdm import tqdm
+from torchvision import transforms
+
 
 
 
@@ -83,7 +85,8 @@ def get_train_loop(config_data) :
 
 def train_loop_CNN_AE_MLP(train_loader, test_loader, model, optimizer, config_data) :
     print('Starting Training...')
-    epochs = config_data['epochs']
+    ae_epochs = config_data['ae_epochs']
+    target_epochs = config_data['target_epochs']
     ae_loss_fn = torch.nn.MSELoss()
     target_loss_fn = torch.nn.BCELoss()
     
@@ -95,42 +98,31 @@ def train_loop_CNN_AE_MLP(train_loader, test_loader, model, optimizer, config_da
     total_test_ae_loss = list()
     total_test_target_loss = list()
 
-    for epoch in range(epochs) : 
+    augmentations = transforms.Compose([
+    transforms.RandomHorizontalFlip(p=0.25),
+    transforms.RandomVerticalFlip(p=0.25)
+    ])
+
+    for epoch in range(ae_epochs) : 
         T0 = time.time()
-
-        epoch_train_acc = list()
         epoch_train_ae_loss = list()
-        epoch_train_target_loss = list()
-
-        epoch_test_acc = list()
         epoch_test_ae_loss = list()
-        epoch_test_target_loss = list()
 
         for batch in tqdm(train_loader) :
-            data = batch[0].float()
+            data = augmentations(batch[0].float())
             labels = batch[1].float()
             model.train()
             optimizer.zero_grad()
             decoded_mat, out = model(data)
             out = out.flatten()
             ae_train_loss = ae_loss_fn(decoded_mat, data)
-            target_train_loss = target_loss_fn(out, labels)
-            ae_train_loss.backward(retain_graph=True)
-            target_train_loss.backward(retain_graph=True)
+            ae_train_loss.backward()
             optimizer.step()
-            train_acc = accuracy(out, labels)
 
-            epoch_train_acc.append(train_acc)
             epoch_train_ae_loss.append(ae_train_loss.item())
-            epoch_train_target_loss.append(target_train_loss.item())
 
-        avg_train_acc =  round((sum(epoch_train_acc) / len(epoch_train_acc)), 4)
         avg_train_ae_loss = round((sum(epoch_train_ae_loss) / len(epoch_train_ae_loss)), 4)
-        avg_train_target_loss = round((sum(epoch_train_target_loss) / len(epoch_train_target_loss)), 4)
-
-        total_train_acc.append(avg_train_acc)
         total_train_ae_loss.append(avg_train_ae_loss)
-        total_train_target_loss.append(avg_train_target_loss)
 
         for batch in tqdm(test_loader) :
             model.eval()
@@ -140,23 +132,60 @@ def train_loop_CNN_AE_MLP(train_loader, test_loader, model, optimizer, config_da
             decoded_mat, out = model(data)
             out = out.flatten()
             ae_test_loss = ae_loss_fn(decoded_mat, data)
+            epoch_test_ae_loss.append(ae_test_loss.item())
+
+
+        avg_test_ae_loss = round((sum(epoch_test_ae_loss) / len(epoch_test_ae_loss)), 4)
+        total_test_ae_loss.append(avg_test_ae_loss)
+        print('AE Epoch: {} Train AE Loss: {} Test AE Loss: {}'.format(epoch+1, avg_train_ae_loss, avg_test_ae_loss))
+
+    model.freeze_autoencoder()
+    for epoch in range(target_epochs) :
+        T0 = time.time()
+        epoch_train_acc = list()
+        epoch_train_target_loss = list()
+        epoch_test_acc = list()
+        epoch_test_target_loss = list()
+
+        for batch in tqdm(train_loader) :
+            data = augmentations(batch[0].float())
+            labels = batch[1].float()
+            model.train()
+            optimizer.zero_grad()
+            decoded_mat, out = model(data)
+            out = out.flatten()
+            target_train_loss = target_loss_fn(out, labels)
+            target_train_loss.backward()
+            optimizer.step()
+            train_acc = accuracy(out, labels)
+            epoch_train_acc.append(train_acc)
+            epoch_train_target_loss.append(target_train_loss.item())
+
+        avg_train_acc =  round((sum(epoch_train_acc) / len(epoch_train_acc)), 4)
+        avg_train_target_loss = round((sum(epoch_train_target_loss) / len(epoch_train_target_loss)), 4)
+
+        total_train_acc.append(avg_train_acc)
+        total_train_target_loss.append(avg_train_target_loss)
+
+        for batch in tqdm(test_loader) :
+            model.eval()
+            optimizer.zero_grad()
+            data = batch[0].float()
+            labels = batch[1].float()
+            decoded_mat, out = model(data)
+            out = out.flatten()
             target_test_loss = target_loss_fn(out, labels)
             test_acc = accuracy(out, labels)
 
             epoch_test_acc.append(test_acc)
-            epoch_test_ae_loss.append(ae_test_loss.item())
             epoch_test_target_loss.append(target_test_loss.item())
 
         avg_test_acc =  round((sum(epoch_test_acc) / len(epoch_test_acc)), 4)
-        avg_test_ae_loss = round((sum(epoch_test_ae_loss) / len(epoch_test_ae_loss)), 4)
         avg_test_target_loss = round((sum(epoch_test_target_loss) / len(epoch_test_target_loss)), 4)
 
-        total_test_acc.append(avg_test_acc)
-        total_test_ae_loss.append(avg_test_ae_loss)
         total_test_target_loss.append(avg_test_target_loss)
-
-        print('Epoch: {} \nTrain Acc: {}% Train AE Loss: {} Train Target Loss: {} \nTest Acc: {}% Test AE Loss: {} Test Target Loss:{}\n'\
-            .format(epoch+1, avg_train_acc*100, avg_train_ae_loss, avg_train_target_loss, avg_test_acc*100, avg_test_ae_loss, avg_test_target_loss))
+        total_test_acc.append(avg_test_acc)
+        print('Target Epoch: {} Train Loss: {} Train Acc: {}% Test Loss: {} Test Acc: {}%'.format(epoch+1, avg_train_target_loss, avg_train_acc*100 , avg_test_target_loss, avg_test_acc*100))
 
     display_plot(config_data, total_train_acc, total_test_acc, total_train_target_loss, total_test_target_loss, ae_train_losses=total_train_ae_loss, ae_test_losses=total_test_ae_loss)
     
@@ -178,7 +207,6 @@ if __name__ == "__main__" :
 
     config_data = load_yaml(config_path)
     train_loader, test_loader = load_train_data(config_data)
-    tensor = next(iter(train_loader))
     model = load_new_model(config_data)
     optimizer = load_optimizer(model.parameters(), config_data)
     train_loop = get_train_loop(config_data)
