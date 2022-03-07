@@ -8,6 +8,7 @@ from models import CNN_AE_MLP
 import os
 import pandas as pd
 import torch
+import torch.nn as nn
 from datasets import *
 import numpy as np
 
@@ -40,6 +41,9 @@ def load_new_model(config_data) :
     model_type =  config_data['model'].lower().replace(' ', '')
     if model_type == 'cnn_ae_mlp' :
         return CNN_AE_MLP()
+    elif model_type == 'transformer':
+        transformer_model = nn.Transformer(nhead=16, num_encoder_layers=12)
+        return transformer_model
     else :
         print('Model not found')
         return 'ERROR in load_new_model'
