@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# Setup files (different for each person)
+train_config.yaml
+
 # User-specific files
 *.rsuser
 *.suo
