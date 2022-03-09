@@ -76,3 +76,11 @@ class CNN_AE_MLP(torch.nn.Module) :
             param.requires_grad = False
         return
 
+    def unfreeze_autoencoder(self) :
+        # Unfreeze the AE Layers to allow training
+        for param in self.encoder.parameters():
+            param.requires_grad = True
+        for param in self.decoder.parameters() :
+            param.requires_grad = True
+        return
+

@@ -67,7 +67,7 @@ def display_plot(config_data, train_accs, test_accs, train_losses, test_losses, 
         plt.clf()
 
 def save_model(model, config_data) :
-    save_path = config_data['model_save_path']
+    save_path = config_data['model_save_path'] + '.pt'
     if save_path.lower().replace(' ', '') == 'none' :
         print('No Save Path Specified')
         return
@@ -109,10 +109,14 @@ def train_loop_CNN_AE_MLP(train_loader, test_loader, model, optimizer, config_da
         epoch_test_ae_loss = list()
 
         for batch in tqdm(train_loader) :
-            data = augmentations(batch[0].float())
+            data = batch[0].float()
             labels = batch[1].float()
             model.train()
             optimizer.zero_grad()
+
+            if config_data['augment_training'] :
+                data = augmentations(data)
+
             decoded_mat, out = model(data)
             out = out.flatten()
             ae_train_loss = ae_loss_fn(decoded_mat, data)
@@ -148,10 +152,14 @@ def train_loop_CNN_AE_MLP(train_loader, test_loader, model, optimizer, config_da
         epoch_test_target_loss = list()
 
         for batch in tqdm(train_loader) :
-            data = augmentations(batch[0].float())
+            data = batch[0].float()
             labels = batch[1].float()
             model.train()
             optimizer.zero_grad()
+
+            if config_data['augment_training'] :
+                data = augmentations(data)
+
             decoded_mat, out = model(data)
             out = out.flatten()
             target_train_loss = target_loss_fn(out, labels)
@@ -206,12 +214,28 @@ if __name__ == "__main__" :
         print('ERROR: Expected a 1 Arguement in train.py (yaml config file)')
 
     config_data = load_yaml(config_path)
-    train_loader, test_loader = load_train_data(config_data)
-    model = load_new_model(config_data)
-    optimizer = load_optimizer(model.parameters(), config_data)
-    train_loop = get_train_loop(config_data)
-    model = train_loop_CNN_AE_MLP(train_loader, test_loader, model, optimizer, config_data)
-    save_model(model, config_data)
+    if not config_data['use_k_fold'] :
+        train_loader, test_loader = load_train_data(config_data)
+        model = load_new_model(config_data)
+        optimizer = load_optimizer(model.parameters(), config_data)
+        train_loop = get_train_loop(config_data)
+        model = train_loop(train_loader, test_loader, model, optimizer, config_data)
+        save_model(model, config_data)
+    else :
+        graph_path = config_data['graph_save_path']
+        model_path = config_data['model_save_path']
+        k = config_data['k_size']
+        loaders = k_fold_split(config_data)
+        for i in range(k) :
+            config_data['graph_save_path'] = graph_path + '_' + str(i+1)
+            config_data['model_save_path'] = model_path + '_' + str(i+1)
+            train_loader, test_loader = loaders[i]
+            model = load_new_model(config_data)
+            optimizer = load_optimizer(model.parameters(), config_data)
+            train_loop = get_train_loop(config_data)
+            model = train_loop(train_loader, test_loader, model, optimizer, config_data)
+            save_model(model, config_data)
+
 
    
 
