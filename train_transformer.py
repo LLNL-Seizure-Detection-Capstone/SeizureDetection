@@ -37,7 +37,7 @@ chbmit_dataset = CHBMITDataset(dataset_path)
 
 length_of_dataset = chbmit_dataset.__len__() # 8190
 
-features = torch.empty(length_of_dataset) # we want to initialize empty tensors (512 x 24 x 8190)
+features = torch.empty(size=(8190, 512, 24)) # we want to initialize empty tensors (512 x 24 x 8190)
 targets = torch.empty(length_of_dataset) # (1 x 8190)
 
 for i in range(length_of_dataset):
@@ -45,24 +45,29 @@ for i in range(length_of_dataset):
     features[i] = feature
     targets[i] = target
 
+
 src = torch.as_strided(features,(sequence_size,feature_size),(1,1)).unsqueeze(1)
 target = torch.as_strided(targets,(sequence_size,feature_size),(1,1)).unsqueeze(1)
 
 # size = (sequence, batch, features)
-# tf_model= nn.Transformer(feature_size,8,2,2,2,0.2)
+tf_model= nn.Transformer(feature_size,8,2,2,2,0.2)
 
-# src_mask = tf_model.generate_square_subsequent_mask(sequence_size)
-# optimizer = torch.optim.SGD(tf_model.parameters(),lr=0.1)
-# loss_fn = torch.nn.MSELoss()
+src_mask = tf_model.generate_square_subsequent_mask(sequence_size)
+optimizer = torch.optim.SGD(tf_model.parameters(),lr=0.1)
+loss_fn = torch.nn.MSELoss()
+binary_loss_fn = nn.BCELoss()
+# try using binary cross entropy
 
-# for epoch in range(1000):
-#     out = tf_model(src,target,src_mask)
-#     optimizer.zero_grad()
-#     loss = loss_fn(out,target)
-#     loss.backward()
-#     optimizer.step()
+for epoch in range(1000):
+    out = tf_model(src,target,src_mask)
+    optimizer.zero_grad()
+    out = torch.sigmoid(out) # run outputs through a sigmoid to be between (0, 1)
+    loss = binary_loss_fn(out,target)
+    loss.backward()
+    optimizer.step()
 
-# out = tf_model(src,target)
-# print(target)
-# print(out)
+out = tf_model(src,target)
+sig_out = torch.sigmoid(out) # check out various thresholds (precision and recall)
+print(target)
+print(sig_out)
 
