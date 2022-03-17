@@ -72,6 +72,10 @@ target = torch.as_strided(targets,(sequence_size,feature_size),(1,1)).unsqueeze(
 # as strided seems necessary because we want target to be of size (T, E) where T is target sequence length and E is the feature number
 # however when we covert our list of 8190 targets we get a 512 x 1 x 24 tensor full of zeroes
 
+# take output and push it through a neural net
+# instead of the output be the next classification it could be the next 2 seconds (you're learning the pattern) & now you have a pretrained transformer.
+# train the model by masking one of the 24 channels and having it predict the signal. Then you can retrain the whole thing and have it be a classifier
+
 print("TARGET AFTER AS_STRIDED:\n", target)
 print("Any 1's:", torch.any(target))
 print("SUM TARGET:", torch.sum(target))
