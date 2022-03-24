@@ -54,9 +54,9 @@ config_data = load_yaml(config_path)
 # train_dl, test_dl = load_train_data_(config_data)
 
 dataset_path = config_data['dataset_path']
-chbmit_dataset = CHBMITDataset(dataset_path)
+chbmit_dataset = RawCHBMITDataset('./raw_chb01')
 
-length_of_dataset = chbmit_dataset.__len__() # 8190
+length_of_dataset = chbmit_dataset.__len__() # 57600
 print("length", length_of_dataset)
 # drop out a whole 2-second chunk
 features = torch.empty(size=(23, 921600)) # set to size of min num columns

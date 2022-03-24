@@ -3,6 +3,8 @@ from torch import tensor, reshape
 from torch.utils.data import Dataset
 from sklearn import preprocessing
 import numpy as np
+import mne
+import os
 
 class CHBMITDataset(Dataset):
     def __init__(self, csv_file, transform=None):
@@ -45,3 +47,40 @@ class CHBMITDataset(Dataset):
         # return (file, y_label)
 
         #return a dataframe 512 x 24 with the last column padded with zeroes and the y label
+
+class RawCHBMITDataset(Dataset):
+    def __init__(self, edf_folder, transform=None):
+        self.df = pd.DataFrame()
+        for filename in os.listdir(edf_folder):
+            filename = os.path.join(edf_folder, filename)
+            print("filepath: ", filename)
+            data = mne.io.read_raw_edf(filename)
+            raw_data = data.get_data()
+            raw_df = pd.DataFrame(raw_data)
+            self.df = pd.concat([self.df, raw_df], axis=1)
+        
+        print("dataframe: ", self.df)
+        # Normalize & Standardize data
+        # Mean Normal
+        #normal_df = (self.df-self.df.mean()) / self.df.std()
+
+        # Min Max Standard
+        # normal_df = (self.df-self.df.min()) / (self.df.max()-self.df.min())
+
+        # normal_df['Outcome'] = self.df['Outcome']
+        # normal_df['Padding'] = self.df['Padding']
+        # self.df = normal_df
+
+        # We may need to normalize somehow by batch
+    
+    def __len__(self):
+        return (len(self.df.columns))//256 - 1 # 14745600 / 256 - 1 = 57600 -> number of seconds of data that we have
+
+    def __getitem__(self, index):
+        startCol = index * 256
+        endCol = startCol + 256
+
+        eeg_tensor = tensor( np.array( self.df.iloc[0:23, startCol:endCol] ))
+        eeg_tensor = reshape( eeg_tensor, (1, 23, 256) )
+        return eeg_tensor 
+        
