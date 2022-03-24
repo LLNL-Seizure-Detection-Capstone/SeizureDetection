@@ -2,10 +2,10 @@ learning_rate : .001
 optimizer : 'Adam'
 batch_size : 32
 model : 'CNN_AE_MLP'
-dataset_path : '/Users/saraberrios/Downloads/chbmit_preprocessed_data.csv'
+dataset_path : 'C:/Users/hambl/Capstone/chbmit_preprocessed_data.csv'
 ae_epochs : 1
 target_epochs : 1
-model_save_path : '/Users/saraberrios/winter-2022/capstone/models/test.pt'
-graph_save_path : '/Users/saraberrios/winter-2022/capstone/graphs/Test'
+model_save_path : 'C:/Users/hambl/Capstone/Models/test.pt'
+graph_save_path : 'C:/Users/hambl/Capstone/Graphs/Test'
 load_existing_model : False
 model_load_path : True

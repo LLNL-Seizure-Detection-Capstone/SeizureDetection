@@ -7,6 +7,7 @@ raw_data = data.get_data()
 print("raw_data:\n", raw_data)
 print("row size:", len(raw_data))
 df = pd.DataFrame(raw_data)
+print("df: ", df)
 print("col size:", len(df.columns))
 # you can get the metadata included in the file and a list of all channels:
 info = data.info

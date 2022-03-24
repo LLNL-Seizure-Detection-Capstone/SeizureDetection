@@ -57,15 +57,33 @@ dataset_path = config_data['dataset_path']
 chbmit_dataset = CHBMITDataset(dataset_path)
 
 length_of_dataset = chbmit_dataset.__len__() # 8190
+print("length", length_of_dataset)
+# drop out a whole 2-second chunk
+features = torch.empty(size=(23, 921600)) # set to size of min num columns
+targets = torch.empty(size=(23, 921600))
 
-features = torch.empty(size=(length_of_dataset - nrow_to_drop, 512, 24)) # we want to initialize empty tensors (512 x 24 x 8190)
-targets = torch.empty(nrow_to_drop) # (1 x n)
+# TODO generate mask
 
+# TODO ask Sara to repurpose dataloader for raw dataset
 count = 0
 for i in range(length_of_dataset):
-    feature, target = chbmit_dataset.__getitem__(i) # we don't actually need the target tho
+    feature = chbmit_dataset.__getitem__(i)[0] # we don't actually need the target tho
     features[i] = feature
-    targets[i] = target
+    if i < length_of_dataset-1:
+        target = chbmit_dataset.__getitem__(i+1)[0]
+        targets[i] = target
+    else:
+        targets[i] = torch.full(size=(512, 24), fill_value=-1)
+
+# mask language model: ex. bert
+#   use smaller architecture of bert (if available)-- but not the pretrained version
+#   don't use distilbert
+#   probably need supercomputer
+#   pytorch has a transformer we can set up to be like bert
+#       reduce number of heads
+
+print("features:", features)
+print("targets:", targets)
 
 src = torch.as_strided(features,(sequence_size,feature_size),(1,1)).unsqueeze(1)
 
