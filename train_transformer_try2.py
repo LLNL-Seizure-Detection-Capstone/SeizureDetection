@@ -56,11 +56,11 @@ config_data = load_yaml(config_path)
 dataset_path = config_data['dataset_path']
 chbmit_dataset = RawCHBMITDataset('./raw_chb01')
 
-length_of_dataset = chbmit_dataset.__len__() # 57600
+length_of_dataset = chbmit_dataset.__len__() 
 print("length", length_of_dataset)
 # drop out a whole 2-second chunk
-features = torch.empty(size=(23, 921600)) # set to size of min num columns
-targets = torch.empty(size=(23, 921600))
+features = torch.empty(size=(23, 256, 57599)) # 921600 = 60 * 60 * 256 
+targets = torch.empty(size=(23, 256, 57599))
 
 # TODO generate mask
 
@@ -68,6 +68,8 @@ targets = torch.empty(size=(23, 921600))
 count = 0
 for i in range(length_of_dataset):
     feature = chbmit_dataset.__getitem__(i)[0] # we don't actually need the target tho
+    print("feature size: ", feature.shape)
+    print("feature[i] size: ", feature[i].shape)
     features[i] = feature
     if i < length_of_dataset-1:
         target = chbmit_dataset.__getitem__(i+1)[0]
@@ -104,7 +106,7 @@ print("SUM SOURCE:", torch.sum(src))
 # size = (sequence, batch, features)
 tf_model= nn.Transformer(feature_size,8,2,2,2,0.2)
 
-src_mask = tf_model.generate_square_subsequent_mask(sequence_size)
+# src_mask = tf_model.generate_square_subsequent_mask(sequence_size)
 optimizer = torch.optim.SGD(tf_model.parameters(),lr=0.1)
 loss_fn = torch.nn.MSELoss()
 binary_loss_fn = nn.BCELoss()
@@ -114,7 +116,9 @@ binary_loss_fn = nn.BCELoss()
 total_loss = 0
 
 for epoch in range(100):
-    out = tf_model(src,target,src_mask)
+    # mask inputs
+
+    out = tf_model(src,target)
     optimizer.zero_grad()
     out = torch.sigmoid(out) # run outputs through a sigmoid to be between (0, 1)
     loss = binary_loss_fn(out,target)
