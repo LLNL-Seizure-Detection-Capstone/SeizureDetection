@@ -65,7 +65,7 @@ class RawCHBMITDataset(Dataset):
         #normal_df = (self.df-self.df.mean()) / self.df.std()
 
         # Min Max Standard
-        # normal_df = (self.df-self.df.min()) / (self.df.max()-self.df.min())
+        normal_df = (self.df-self.df.min()) / (self.df.max()-self.df.min())
 
         # normal_df['Outcome'] = self.df['Outcome']
         # normal_df['Padding'] = self.df['Padding']
