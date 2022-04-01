@@ -59,13 +59,14 @@ class RawCHBMITDataset(Dataset):
             raw_df = pd.DataFrame(raw_data)
             self.df = pd.concat([self.df, raw_df], axis=1)
         
-        print("dataframe: ", self.df)
+        
         # Normalize & Standardize data
         # Mean Normal
         #normal_df = (self.df-self.df.mean()) / self.df.std()
 
         # Min Max Standard
-        normal_df = (self.df-self.df.min()) / (self.df.max()-self.df.min())
+        self.df = (self.df-self.df.min()) / (self.df.max()-self.df.min())
+        print("dataframe: ", self.df)
 
         # normal_df['Outcome'] = self.df['Outcome']
         # normal_df['Padding'] = self.df['Padding']
