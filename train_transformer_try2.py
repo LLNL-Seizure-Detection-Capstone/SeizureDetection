@@ -10,6 +10,7 @@ from torchvision import transforms
 import math
 import torch.nn as nn
 import torch.nn.functional as F
+import random
 
 def accuracy(y_true, y_prob):
     y_hat = []
@@ -30,6 +31,29 @@ def accuracy(y_true, y_prob):
             num_correct += 1
     
     return num_correct / len(y_true)
+
+def mask_features(features):
+    # tokens_len = [len(token) for token in tokens]
+    # chars = [char for char in sentence]
+    # output_label = []
+
+    # loop through columns of df features
+    for i in range(len(features)):
+        
+        prob = random.random() # generates value between 0 and 1
+        if prob < 0.15:
+            prob /= 0.15
+
+            # 80% randomly change token to mask token
+            if prob < 0.8:
+                features[i] = torch.full(size=features[i].size(), fill_value=np.inf)
+
+            # 10% randomly change token to random token
+            elif prob < 0.9:
+                features[i] = torch.rand(size=features[i].size())
+
+    return features
+
 
 feature_size = 24
 sequence_size = 512
@@ -59,49 +83,27 @@ chbmit_dataset = RawCHBMITDataset('./raw_chb01')
 length_of_dataset = chbmit_dataset.__len__() 
 print("length", length_of_dataset)
 # drop out a whole 2-second chunk
-features = torch.empty(size=(23, 256, 57599)) # 921600 = 60 * 60 * 256 
-targets = torch.empty(size=(23, 256, 57599))
+features = torch.empty(size=(57599, 23, 256)) # 921600 = 60 * 60 * 256 
+targets = torch.empty(size=(57599, 23, 256))
 
-# TODO generate mask
-
-# TODO ask Sara to repurpose dataloader for raw dataset
 count = 0
 for i in range(length_of_dataset):
     feature = chbmit_dataset.__getitem__(i)[0] # we don't actually need the target tho
     print("feature size: ", feature.shape)
-    print("feature[i] size: ", feature[i].shape)
+    print("features[i] size: ", features[i].shape)
     features[i] = feature
     if i < length_of_dataset-1:
         target = chbmit_dataset.__getitem__(i+1)[0]
         targets[i] = target
     else:
-        targets[i] = torch.full(size=(512, 24), fill_value=-1)
-
-# mask language model: ex. bert
-#   use smaller architecture of bert (if available)-- but not the pretrained version
-#   don't use distilbert
-#   probably need supercomputer
-#   pytorch has a transformer we can set up to be like bert
-#       reduce number of heads
+        targets[i] = torch.full(size=(23, 256), fill_value=-1)
 
 print("features:", features)
 print("targets:", targets)
 
+# TODO do we need these?
 src = torch.as_strided(features,(sequence_size,feature_size),(1,1)).unsqueeze(1)
-
 target = torch.as_strided(targets,(sequence_size,feature_size),(1,1)).unsqueeze(1) # target no longer contains any 1 values (tensor full of zeroes)
-# as strided seems necessary because we want target to be of size (T, E) where T is target sequence length and E is the feature number
-# however when we covert our list of 8190 targets we get a 512 x 1 x 24 tensor full of zeroes
-
-# take output and push it through a neural net
-# instead of the output be the next classification it could be the next 2 seconds (you're learning the pattern) & now you have a pretrained transformer.
-# train the model by masking one of the 24 channels and having it predict the signal. Then you can retrain the whole thing and have it be a classifier
-
-print("TARGET AFTER AS_STRIDED:\n", target)
-print("Any 1's:", torch.any(target))
-print("SUM TARGET:", torch.sum(target))
-print("SUM SOURCE:", torch.sum(src))
-
 
 # size = (sequence, batch, features)
 tf_model= nn.Transformer(feature_size,8,2,2,2,0.2)
@@ -132,10 +134,3 @@ for epoch in range(100):
     print("Average training loss:{0:.2f}".format(avg_train_loss))
 
 out = tf_model(src,target)
-# print("output shape:", out.size())
-# sig_out = torch.sigmoid(out) # check out various thresholds (precision and recall) (24 x 1 x 512)
-# print("sigmoid output shape:", sig_out.size())
-# # print(target)
-# print("OUPUT VALUES:\n", sig_out)
-# #print("Accuracy: ", accuracy(targets, sig_out))
-
