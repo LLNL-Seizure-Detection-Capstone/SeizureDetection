@@ -143,7 +143,8 @@ def train_loop_CNN_AE_MLP(train_loader, test_loader, model, optimizer, config_da
         total_test_ae_loss.append(avg_test_ae_loss)
         print('AE Epoch: {} Train AE Loss: {} Test AE Loss: {}'.format(epoch+1, avg_train_ae_loss, avg_test_ae_loss))
 
-    model.freeze_autoencoder()
+    # Freezing the Autoencoder causes the value of the loss to go up
+    #model.freeze_autoencoder()
     for epoch in range(target_epochs) :
         T0 = time.time()
         epoch_train_acc = list()
@@ -197,7 +198,7 @@ def train_loop_CNN_AE_MLP(train_loader, test_loader, model, optimizer, config_da
 
     display_plot(config_data, total_train_acc, total_test_acc, total_train_target_loss, total_test_target_loss, ae_train_losses=total_train_ae_loss, ae_test_losses=total_test_ae_loss)
     
-    return model
+    return model, total_test_acc[-1], total_test_target_loss[-1]
 
 if __name__ == "__main__" :
     # If no command line arguement were given then it checks the local directory for a train_config.yaml file
@@ -219,13 +220,15 @@ if __name__ == "__main__" :
         model = load_new_model(config_data)
         optimizer = load_optimizer(model.parameters(), config_data)
         train_loop = get_train_loop(config_data)
-        model = train_loop(train_loader, test_loader, model, optimizer, config_data)
+        model, acc, loss = train_loop(train_loader, test_loader, model, optimizer, config_data)
         save_model(model, config_data)
     else :
         graph_path = config_data['graph_save_path']
         model_path = config_data['model_save_path']
         k = config_data['k_size']
         loaders = k_fold_split(config_data)
+        accs = list()
+        losses = list()
         for i in range(k) :
             config_data['graph_save_path'] = graph_path + '_' + str(i+1)
             config_data['model_save_path'] = model_path + '_' + str(i+1)
@@ -233,8 +236,12 @@ if __name__ == "__main__" :
             model = load_new_model(config_data)
             optimizer = load_optimizer(model.parameters(), config_data)
             train_loop = get_train_loop(config_data)
-            model = train_loop(train_loader, test_loader, model, optimizer, config_data)
+            model, acc, loss = train_loop(train_loader, test_loader, model, optimizer, config_data)
+            accs.append(acc)
+            losses.append(loss)
             save_model(model, config_data)
+        print(f'Average K Acc: { sum(accs) / len(accs) }')
+        print(f'Averahe K Loss: {sum(losses) / len(losses) }')
 
 
    

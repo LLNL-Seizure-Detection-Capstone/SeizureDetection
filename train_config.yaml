@@ -5,8 +5,8 @@ model : 'CNN_AE_MLP'
 dataset_path : 'C:\Users\bisch\Downloads\chbmit.csv'
 ae_epochs : 120
 target_epochs : 25
-model_save_path : 'C:\Users\bisch\OneDrive\Desktop\School\Capstone\Models\KFold_Test'
-graph_save_path : 'C:\Users\bisch\OneDrive\Desktop\School\Capstone\Graphs\KFold_Test'
+model_save_path : 'C:\Users\bisch\OneDrive\Desktop\School\Capstone\Models\NF_No_Augment'
+graph_save_path : 'C:\Users\bisch\OneDrive\Desktop\School\Capstone\Graphs\NF_No_Augment'
 load_existing_model : False
 model_load_path : True
 use_k_fold : True
