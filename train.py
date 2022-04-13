@@ -143,8 +143,6 @@ def train_loop_CNN_AE_MLP(train_loader, test_loader, model, optimizer, config_da
         total_test_ae_loss.append(avg_test_ae_loss)
         print('AE Epoch: {} Train AE Loss: {} Test AE Loss: {}'.format(epoch+1, avg_train_ae_loss, avg_test_ae_loss))
 
-    # Freezing the Autoencoder causes the value of the loss to go up
-    #model.freeze_autoencoder()
     for epoch in range(target_epochs) :
         T0 = time.time()
         epoch_train_acc = list()

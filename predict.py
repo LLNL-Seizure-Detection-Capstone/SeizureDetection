@@ -24,5 +24,12 @@ if __name__ == "__main__" :
     config_data = load_yaml(config_path)
     model = load_existing_model(config_data)
     dataset = load_predict_data(config_data)
-    predicitons = model(dataset)
-    save_predictions(dataset, predictions, config_data)
+    preds = list()
+    for data in dataset :
+        decoded, pred = model(data)
+        preds.append(pred)
+    preds_map = dict()
+    preds_map['Pred'] = [ 1 if x > .5 else 0 for x in preds ]
+    preds_df = pd.DataFrame(preds_map)
+    save_path = config_data['prediction_save_path']
+    preds_df.to_csv(save_path)
