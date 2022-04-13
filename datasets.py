@@ -1,7 +1,6 @@
 import pandas as pd
 from torch import tensor, reshape
 from torch.utils.data import Dataset
-from sklearn import preprocessing
 import numpy as np
 import mne
 import os
@@ -31,31 +30,20 @@ class CHBMITDataset(Dataset):
         label_tensor = tensor(outcome)
         return eeg_tensor, label_tensor # return feature matrix and labels
 
+# TODO: Finish Raw Dataset to be used by Transformer
 class RawCHBMITDataset(Dataset):
     def __init__(self, edf_folder, transform=None):
         self.df = pd.DataFrame()
+        # Currently reads a folder of EEG data, update to read entire database
         for filename in os.listdir(edf_folder):
             filename = os.path.join(edf_folder, filename)
-            print("filepath: ", filename)
             data = mne.io.read_raw_edf(filename)
             raw_data = data.get_data()
             raw_df = pd.DataFrame(raw_data)
             self.df = pd.concat([self.df, raw_df], axis=1)
-        
-        
-        # Normalize & Standardize data
-        # Mean Normal
-        #normal_df = (self.df-self.df.mean()) / self.df.std()
 
         # Min Max Standard
         self.df = (self.df-self.df.min()) / (self.df.max()-self.df.min())
-        print("dataframe: ", self.df)
-
-        # normal_df['Outcome'] = self.df['Outcome']
-        # normal_df['Padding'] = self.df['Padding']
-        # self.df = normal_df
-
-        # We may need to normalize somehow by batch
     
     def __len__(self):
         return (len(self.df.columns))//256 - 1 # 14745600 / 256 - 1 = 57600 -> number of seconds of data that we have
