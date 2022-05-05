@@ -1,5 +1,5 @@
 # Seizure Detection
-The purpose of this project was to work under the direction of Lawrence Livermore National Labaratories to automate a seizure detection model.
+The purpose of this project was to work under the direction of Lawrence Livermore National Laboratories to automate a seizure detection model.
 
 ## Introduction
 In reviewing the current literature, we found that many research teams have investigated traditional machine learning architectures to accomplish a similar task; however, fewer teams had tested deep learning models. We built a custom dataset from a preprocessed subset of the CHB-MIT dataset to train an autoencoder that achieved 94\% accuracy on test data. We also began work on a transformer architecture that could be used to not only identify seizures recorded in the data but predict a seizure before its onset.
